@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -122,4 +125,30 @@ func backupDecorates(t *testing.T) {
 		decorateFunc = backup
 		decorateWriterFunc = backupWriter
 	})
+}
+
+func TestDecorateWriter(t *testing.T) {
+	testcases := [...]struct {
+		in   string
+		want string
+	}{
+		{in: "test"},
+	}
+	for i, tt := range testcases {
+		tt := tt
+		title := fmt.Sprintf("case_%d", i)
+		t.Run(title, func(t *testing.T) {
+			var buf bytes.Buffer
+			w := decorateWriter(&buf)
+			r := strings.NewReader(tt.in)
+			_, err := io.Copy(w, r)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := buf.String()
+			if got != tt.want {
+				t.Errorf("want:\n%s\ngot:\n%s", tt.want, got)
+			}
+		})
+	}
 }
